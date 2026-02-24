@@ -1,0 +1,147 @@
+﻿<!doctype html>
+<html lang="cs">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Detektor portálů</title>
+
+  <style>
+    :root {
+      --bg: #0b0f14;
+      --fg: #e8eef6;
+      --muted: #a9b4c2;
+      --ring: rgba(232, 238, 246, 0.18);
+      --dot: rgba(232, 238, 246, 0.9);
+    }
+
+    html, body {
+      height: 100%;
+      margin: 0;
+      background: radial-gradient(900px 700px at 50% 30%, #121a25 0%, var(--bg) 55%);
+      color: var(--fg);
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+    }
+
+    .center {
+      height: 100%;
+      display: grid;
+      place-items: center;
+      text-align: center;
+      padding: 24px;
+    }
+
+    .stack {
+      display: grid;
+      gap: 14px;
+      justify-items: center;
+    }
+
+    .spinner {
+      width: 56px;
+      height: 56px;
+      border-radius: 999px;
+      border: 6px solid var(--ring);
+      border-top-color: var(--dot);
+      animation: spin 0.9s linear infinite;
+      box-sizing: border-box;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    .label {
+      font-size: 16px;
+      letter-spacing: 0.2px;
+      color: var(--muted);
+      user-select: none;
+    }
+
+    /* Pro lidi, co mají radši méně animací */
+    @media (prefers-reduced-motion: reduce) {
+      .spinner { animation: none; }
+    }
+
+    /* --- Redirect animace --- */
+    .fade-out .stack {
+      animation: fadeOut 650ms ease forwards;
+    }
+
+    .fade-out .spinner {
+      animation: spin 0.35s linear infinite, pop 650ms ease forwards;
+    }
+
+    .fade-out body,
+    body.fade-out {
+      transition: filter 650ms ease, opacity 650ms ease;
+    }
+
+    body.fade-out {
+      filter: blur(2px) brightness(0.9);
+      opacity: 0;
+    }
+
+    @keyframes fadeOut {
+      to { opacity: 0; transform: translateY(6px); }
+    }
+
+    @keyframes pop {
+      40% { transform: scale(1.08); }
+      100% { transform: scale(0.96); }
+    }
+  </style>
+</head>
+
+<body>
+  <main class="center">
+    <div class="stack" aria-live="polite">
+      <div class="spinner" aria-label="Načítání"></div>
+      <div class="label" id="status">Startování detektoru portálů…</div>
+    </div>
+  </main>
+
+  <script>
+    // Nastav si cílový odkaz:
+    const REDIRECT_URL = "https://example.com"; // <-- sem dej svůj odkaz
+
+    // Kontrolní čas: 20:30
+    const TARGET_HOUR = 20;
+    const TARGET_MINUTE = 30;
+
+    let redirecting = false; // ochrana proti vícenásobnému spuštění
+
+    function isAfterTargetTime(now = new Date()) {
+      const h = now.getHours();
+      const m = now.getMinutes();
+      if (h > TARGET_HOUR) return true;
+      if (h < TARGET_HOUR) return false;
+      return m >= TARGET_MINUTE;
+    }
+
+    function redirectWithEffect() {
+      const status = document.getElementById("status");
+      status.textContent = "Přesměrovávám…";
+
+      // přidá CSS třídu pro animaci
+      document.body.classList.add("fade-out");
+
+      // počká 650ms a pak přesměruje
+      setTimeout(() => {
+        window.location.replace(REDIRECT_URL);
+      }, 650);
+    }
+
+    function checkAndRedirect() {
+      const now = new Date();
+
+      if (isAfterTargetTime(now) && !redirecting) {
+        redirecting = true;
+        redirectWithEffect();
+      }
+    }
+
+    // kontrola každých 10 sekund
+    setInterval(checkAndRedirect, 10_000);
+  </script>
+</body>
+</html>
